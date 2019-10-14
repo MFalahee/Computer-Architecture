@@ -2,12 +2,21 @@
 
 import sys
 
+
 class CPU:
     """Main CPU class."""
 
     def __init__(self):
         """Construct a new CPU."""
-        pass
+        self.pc = 0
+        self.reg = [0] * 8
+        self.ram = [0] * 256
+
+    def ram_read(self, address):
+        return self.ram[address]
+
+    def ram_write(self, address, value):
+        self.ram[address] = value
 
     def load(self):
         """Load a program into memory."""
@@ -62,4 +71,38 @@ class CPU:
 
     def run(self):
         """Run the CPU."""
-        pass
+        running = True
+        
+        while running is True:
+            IR = self.ram_read(self.pc)
+            operand_a = self.ram_read(self.pc + 1)
+            operand_b = self.ram_read(self.pc + 2)
+            print(IR)
+            print(operand_a)
+            print(operand_b)
+
+            self.trace()
+            # print('IR: ', IR)
+            # print('Operand_a', operand_a)
+            # print('Operand_b', operand_b)
+
+            #HLT or HALT! -- Halt the CPU (and exit the emulator).
+            if IR == 0b00000001:
+                running = False
+
+            #LDI register immediate -- Set the value of a register to an integer.
+            if IR is 0b10000010:
+                self.reg[operand_a] = operand_b
+                self.pc += 3
+
+            #PRN register pseudo-instruction -- Print numeric value stored in the given register.
+            elif IR is 0b01000111:
+                print(self.reg[operand_a])
+                self.pc += 2
+            
+            else:
+                print(f'Unknown command: {self.pc}')
+            
+
+       
+
