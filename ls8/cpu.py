@@ -22,22 +22,35 @@ class CPU:
         """Load a program into memory."""
 
         address = 0
+        program = sys.argv[1]
 
+        try:
+            with open(program) as f:
+                count = 0
+                for line in f:
+                    count += 1
+                    print(count, line)
+        
+        except FileNotFoundError:
+            print(f"{sys.argv[0]}: {sys.argv[1]} not found.")
+            sys.exit(2)
+
+            
         # For now, we've just hardcoded a program:
 
-        program = [
-            # From print8.ls8
-            0b10000010, # LDI R0,8
-            0b00000000,
-            0b00001000,
-            0b01000111, # PRN R0
-            0b00000000,
-            0b00000001, # HLT
-        ]
+        # program = [
+        #     # From print8.ls8
+        #     0b10000010, # LDI R0,8
+        #     0b00000000,
+        #     0b00001000,
+        #     0b01000111, # PRN R0
+        #     0b00000000,
+        #     0b00000001, # HLT
+        # ]
 
-        for instruction in program:
-            self.ram[address] = instruction
-            address += 1
+        # for instruction in program:
+        #     self.ram[address] = instruction
+        #     address += 1
 
 
     def alu(self, op, reg_a, reg_b):
@@ -77,14 +90,8 @@ class CPU:
             IR = self.ram_read(self.pc)
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
-            print(IR)
-            print(operand_a)
-            print(operand_b)
 
             self.trace()
-            # print('IR: ', IR)
-            # print('Operand_a', operand_a)
-            # print('Operand_b', operand_b)
 
             #HLT or HALT! -- Halt the CPU (and exit the emulator).
             if IR == 0b00000001:
