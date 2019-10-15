@@ -29,13 +29,26 @@ class CPU:
                 count = 0
                 for line in f:
                     count += 1
-                    print(count, line)
+                    # Process comments, and ignore them.
+                    # Ignore anything after a # symbol
+                    comment_split = line.split('#')
+
+                    # Convert numbers from binary strings to integers
+                    num = comment_split[0].strip()
+                    try:    
+                        x = int(num, 2)
+                    except ValueError:
+                        continue
+                    # print(f"{x:08b}: {x:d}")
+
+                    self.ram[address] = x
+                    address += 1
         
         except FileNotFoundError:
             print(f"{sys.argv[0]}: {sys.argv[1]} not found.")
             sys.exit(2)
 
-            
+
         # For now, we've just hardcoded a program:
 
         # program = [
@@ -106,6 +119,11 @@ class CPU:
             elif IR is 0b01000111:
                 print(self.reg[operand_a])
                 self.pc += 2
+            
+            #MUL registerA registerB -- Multiply the values in two registers together and store the result in registerA.
+            elif IR is 0b10100010:
+                self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
+                self.pc += 3
             
             else:
                 print(f'Unknown command: {self.pc}')
