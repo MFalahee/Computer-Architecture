@@ -11,6 +11,7 @@ class CPU:
         self.pc = 0
         self.reg = [0] * 8
         self.ram = [0] * 256
+        self.sp = 0xF4
 
     def ram_read(self, address):
         return self.ram[address]
@@ -98,20 +99,18 @@ class CPU:
     def run(self):
         """Run the CPU."""
         running = True
-        
         while running is True:
             IR = self.ram_read(self.pc)
             operand_a = self.ram_read(self.pc + 1)
             operand_b = self.ram_read(self.pc + 2)
+            # self.trace()
 
-            self.trace()
-
-            #HLT or HALT! -- Halt the CPU (and exit the emulator).
-            if IR == 0b00000001:
+            # HLT or HALT! -- Halt the CPU (and exit the emulator).
+            if IR is 0b00000001:
                 running = False
 
-            #LDI register immediate -- Set the value of a register to an integer.
-            if IR is 0b10000010:
+            # LDI register immediate -- Set the value of a register to an integer.
+            elif IR is 0b10000010:
                 self.reg[operand_a] = operand_b
                 self.pc += 3
 
@@ -124,9 +123,25 @@ class CPU:
             elif IR is 0b10100010:
                 self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
                 self.pc += 3
+
+            #PUSH register -- Push the value in the given register on the stack.
+            elif IR is 0b01000101:
+                #Decrement the SP
+                #Copy the value in the given register to the address pointed to by SP
+                self.sp -= 1
+                self.ram[self.sp]= self.reg[operand_a]
+                self.pc += 2
+
+            #POP register -- Pop the value at the top of the stack into the given register.
+            elif IR is 0b01000110:
+                # Copy the value from the address pointed to by SP to the given register.
+                # Increment SP.
+                self.reg[operand_a] = self.ram[self.sp]
+                self.sp += 1
+                self.pc += 2
             
-            else:
-                print(f'Unknown command: {self.pc}')
+            # else:
+            #     print(f'Unknown command: {self.pc}')
             
 
        
