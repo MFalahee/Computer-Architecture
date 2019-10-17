@@ -140,6 +140,22 @@ class CPU:
                 self.sp += 1
                 self.pc += 2
             
+            #CALL register - Calls a subroutine (function) at the address stored in the register.
+            elif IR is 0b01010000:
+                self.sp -= 1
+                self.ram[self.sp] = self.pc + 2
+                self.pc = self.reg[operand_a]
+
+            #RET - Return from subroutine.
+            elif IR is 0b00010001:
+                #Pop the value from the top of the stack and store it in the PC
+                self.pc = self.ram[self.sp]
+                self.sp += 1
+
+            #ADD registerA registerB - Add the value in two registers and store the result in registerA.
+            elif IR is 0b10100000:
+                self.reg[operand_a] += self.reg[operand_b]
+                self.pc += 3
             # else:
             #     print(f'Unknown command: {self.pc}')
             
