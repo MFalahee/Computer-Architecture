@@ -12,6 +12,7 @@ class CPU:
         self.reg = [0] * 8
         self.ram = [0] * 256
         self.sp = 0xF4
+        self.fl = 0b00000000
 
     def ram_read(self, address):
         return self.ram[address]
@@ -156,9 +157,49 @@ class CPU:
             elif IR is 0b10100000:
                 self.reg[operand_a] += self.reg[operand_b]
                 self.pc += 3
-            # else:
-            #     print(f'Unknown command: {self.pc}')
             
+            #CMP registerA registerB -- Compare the values in two registers
+            # FL bits: 00000LGE
+            elif IR is 0b10100111:
+                #if equal
+                if self.reg[operand_a] == self.reg[operand_b]:
+                    self.fl = 0b00000001
+                elif self.reg[operand_a] > self.reg[operand_b]:
+                    self.fl = 0b00000010
+                else:
+                    self.fl = 0b00000100
+                self.pc += 3
 
-       
+            #JMP register
+            elif IR is 0b01010100:
+                # Jump to the address stored in the given register.
+                # Set the PC to the address stored in the given register.
+                self.pc = self.reg[operand_a]
+
+            #JEQ register -- If equal flag is set (true), jump to the address stored in the given register.
+            elif IR is 0b01010101:
+                # print('--- JEQ')
+                # print(self.fl)
+                # print(bin(self.fl))
+                # print('[-1]', bin(self.fl)[-1])
+                # print('----')
+                if bin(self.fl)[-1] is '1':
+                    # print('Passes')
+                    self.pc = self.reg[operand_a]
+                else:
+                    self.pc += 2
+
+            #JNE register -- If E flag is clear (false, 0), jump to the address stored in the given register.
+            elif IR is 0b01010110:
+                # print('--- JNE')
+                # print(self.fl)
+                # print(bin(self.fl))
+                # print('[-1]', bin(self.fl)[-1])
+                # print('----')
+                if bin(self.fl)[-1] is '0':
+                    # print('Passes')
+                    self.pc = self.reg[operand_a]
+                else:
+                    self.pc += 2
+
 
