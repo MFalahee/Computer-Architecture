@@ -51,29 +51,28 @@ class CPU:
             sys.exit(2)
 
 
-        # For now, we've just hardcoded a program:
-
-        # program = [
-        #     # From print8.ls8
-        #     0b10000010, # LDI R0,8
-        #     0b00000000,
-        #     0b00001000,
-        #     0b01000111, # PRN R0
-        #     0b00000000,
-        #     0b00000001, # HLT
-        # ]
-
-        # for instruction in program:
-        #     self.ram[address] = instruction
-        #     address += 1
-
-
-    def alu(self, op, reg_a, reg_b):
+    def alu(self, op, reg_a, reg_b=None):
         """ALU operations."""
 
         if op == "ADD":
             self.reg[reg_a] += self.reg[reg_b]
-        #elif op == "SUB": etc
+        elif op == "MUL":
+            self.reg[reg_a] = self.reg[reg_a] * self.reg[reg_b]
+        elif op == "MOD":
+            self.reg[reg_a] = self.reg[reg_a] % self.reg[reg_b]
+        elif op == "AND":
+            self.reg[reg_a] = self.reg[reg_a] & self.reg[reg_b]
+        elif op == "OR":
+            self.reg[reg_a] = self.reg[reg_a] | self.reg[reg_b]
+        elif op == "XOR":
+            self.reg[reg_a] = self.reg[reg_a] ^ self.reg[reg_b]
+        elif op == "NOT":
+            self.reg[reg_a] = ~self.reg[reg_a]
+        elif op == "SHL":
+            self.reg[reg_a] = self.reg[reg_a] << self.reg[reg_b]
+        elif op == "SHR":
+            self.reg[reg_a] = self.reg[reg_a] >> self.reg[reg_b]
+
         else:
             raise Exception("Unsupported ALU operation")
 
@@ -119,11 +118,10 @@ class CPU:
             elif IR is 0b01000111:
                 print(self.reg[operand_a])
                 self.pc += 2
-            
-            #MUL registerA registerB -- Multiply the values in two registers together and store the result in registerA.
-            elif IR is 0b10100010:
-                self.reg[operand_a] = self.reg[operand_a] * self.reg[operand_b]
-                self.pc += 3
+
+            ########
+            ## STACK OPS
+            ########
 
             #PUSH register -- Push the value in the given register on the stack.
             elif IR is 0b01000101:
@@ -141,6 +139,10 @@ class CPU:
                 self.sp += 1
                 self.pc += 2
             
+            #######
+            ## SUBROUTINE OPS
+            #######
+
             #CALL register - Calls a subroutine (function) at the address stored in the register.
             elif IR is 0b01010000:
                 self.sp -= 1
@@ -152,16 +154,10 @@ class CPU:
                 #Pop the value from the top of the stack and store it in the PC
                 self.pc = self.ram[self.sp]
                 self.sp += 1
-
-            #ADD registerA registerB - Add the value in two registers and store the result in registerA.
-            elif IR is 0b10100000:
-                self.reg[operand_a] += self.reg[operand_b]
-                self.pc += 3
             
             #CMP registerA registerB -- Compare the values in two registers
             # FL bits: 00000LGE
             elif IR is 0b10100111:
-                #if equal
                 if self.reg[operand_a] == self.reg[operand_b]:
                     self.fl = 0b00000001
                 elif self.reg[operand_a] > self.reg[operand_b]:
@@ -169,6 +165,10 @@ class CPU:
                 else:
                     self.fl = 0b00000100
                 self.pc += 3
+
+            ######
+            ## SPRINT MVP
+            ######
 
             #JMP register
             elif IR is 0b01010100:
@@ -178,28 +178,69 @@ class CPU:
 
             #JEQ register -- If equal flag is set (true), jump to the address stored in the given register.
             elif IR is 0b01010101:
-                # print('--- JEQ')
-                # print(self.fl)
-                # print(bin(self.fl))
-                # print('[-1]', bin(self.fl)[-1])
-                # print('----')
+                #I use bin() here because otherwise self.fl is just passed in decimal form which ruins the conditional.
                 if bin(self.fl)[-1] is '1':
-                    # print('Passes')
                     self.pc = self.reg[operand_a]
                 else:
                     self.pc += 2
 
             #JNE register -- If E flag is clear (false, 0), jump to the address stored in the given register.
             elif IR is 0b01010110:
-                # print('--- JNE')
-                # print(self.fl)
-                # print(bin(self.fl))
-                # print('[-1]', bin(self.fl)[-1])
-                # print('----')
                 if bin(self.fl)[-1] is '0':
-                    # print('Passes')
                     self.pc = self.reg[operand_a]
                 else:
                     self.pc += 2
 
+            ########
+            ## ALU OPS
+            ########
+
+            #ADD registerA registerB - Add the value in two registers and store the result in registerA.
+            elif IR is 0b10100000:
+                self.alu('ADD', operand_a, operand_b)
+                self.pc += 3
+
+            #MUL registerA registerB -- Multiply the values in two registers together and store the result in registerA.
+            elif IR is 0b10100010:
+                self.alu("MUL", operand_a, operand_b)
+                self.pc += 3
+
+            #MOD
+            elif IR is 0b10100100:
+                if self.reg[operand_b] is not 0:
+                    self.alu("MOD", operand_a, operand_b)
+                    self.pc += 3
+                else:
+                    print("Error with R[b] in MOD")
+                    running = False 
+
+            #AND
+            elif IR is 0b10101000:
+                self.alu("AND", operand_a, operand_b)
+                self.pc += 3
+            #OR
+            elif IR is 0b10101010:
+                self.alu("OR", operand_a, operand_b)
+                self.pc += 3
+
+            #XOR - XOR registerA registerB - Perform a bitwise-XOR between the values in registerA and registerB, storing the result in registerA.
+            elif IR is 0b10101011:
+                self.alu('XOR', operand_a, operand_b)
+                self.pc += 3
+
+            #NOT
+            elif IR is 0b01101001:
+                self.alu("NOT", operand_a, operand_b)
+                self.pc += 2
+
+            #SHL
+            elif IR is 0b10101100:
+                self.alu("SHL", operand_a, operand_b)
+                self.pc += 3
+            #SHR
+            elif IR is 0b10101101:
+                self.alu("SHR", operand_a, operand_b)
+                self.pc += 3
+
+           
 
